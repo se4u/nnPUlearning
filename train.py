@@ -2,7 +2,8 @@ import six
 import copy
 import argparse
 import chainer
-
+from pdb import set_trace
+import numpy as np
 try:
     from matplotlib import use
     use('Agg')
@@ -167,6 +168,8 @@ class MultiEvaluator(chainer.training.extensions.Evaluator):
 
         return summary.compute_mean()
 
+def arrify(tpl):
+    return np.array([float(e) for e in tpl])
 
 class MultiPUEvaluator(chainer.training.extensions.Evaluator):
     default_name = 'validation'
@@ -199,15 +202,15 @@ class MultiPUEvaluator(chainer.training.extensions.Evaluator):
             if isinstance(in_arrays, tuple):
                 in_vars = tuple(Variable(x) for x in in_arrays)
                 for k, target in targets.items():
-                    summary[k] += target.compute_prediction_summary(*in_vars)
+                    summary[k] += arrify(target.compute_prediction_summary(*in_vars))
             elif isinstance(in_arrays, dict):
                 in_vars = {key: Variable(x) for key, x in six.iteritems(in_arrays)}
                 for k, target in targets.items():
-                    summary[k] += target.compute_prediction_summary(**in_vars)
+                    summary[k] += arrify(target.compute_prediction_summary(**in_vars))
             else:
                 in_vars = Variable(in_arrays)
                 for k, target in targets.items():
-                    summary[k] += target.compute_prediction_summary(in_vars)
+                    summary[k] += arrify(target.compute_prediction_summary(in_vars))
         computed_summary = self.compute_summary(summary)
         summary = chainer.reporter.DictSummary()
         observation = {}
